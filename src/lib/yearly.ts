@@ -91,12 +91,12 @@ export function buildHoroscopeView(
   };
 
   // 大限
-  const decadal = data.decadal || {};
-  const decadalPalace =
-    decadal.palaceName ||
-    decadal.name ||
-    decadal.palace ||
-    (Array.isArray(decadal.palaceNames) ? decadal.palaceNames[0] : undefined);
+const decadal = data.decadal || {};
+const decadalPalace =
+  decadal.palaceName ||
+  decadal.name ||
+  decadal.palace ||
+  (Array.isArray(decadal.palaceNames) ? decadal.palaceNames[0] : undefined);
   let decadalRange: string | undefined;
   if (decadal.range) {
     decadalRange = Array.isArray(decadal.range)
