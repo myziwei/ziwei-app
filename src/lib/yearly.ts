@@ -30,19 +30,33 @@ function genderZh(g: BirthInfo["gender"]) {
   return g === "male" ? "男" : "女";
 }
 
-function collectStars(obj: any, kind: OverlayStar["kind"]): string[] {
+function collectStars(obj: unknown): string[] {
   if (!obj) return [];
   const names: string[] = [];
-  const push = (x: any) => {
+  const push = (x: unknown) => {
     if (!x) return;
     if (typeof x === "string") names.push(x);
-    else if (x.name) names.push(String(x.name));
+    else if (typeof x === "object" && x !== null && "name" in x) {
+      names.push(String((x as { name: unknown }).name));
+    }
   };
-  if (Array.isArray(obj)) obj.forEach(push);
-  else if (Array.isArray(obj.stars)) obj.stars.forEach(push);
-  else if (Array.isArray(obj.mutagen)) {
-    // 四化名
-    obj.mutagen.forEach((m: any) => names.push(typeof m === "string" ? `化${m}` : `化${m?.name || m}`));
+  if (Array.isArray(obj)) {
+    obj.forEach(push);
+  } else if (typeof obj === "object" && obj !== null) {
+    const o = obj as Record<string, unknown>;
+    if (Array.isArray(o.stars)) o.stars.forEach(push);
+    else if (Array.isArray(o.mutagen)) {
+      // 四化名
+      o.mutagen.forEach((m: unknown) => {
+        if (typeof m === "string") {
+          names.push(`化${m}`);
+        } else if (typeof m === "object" && m !== null && "name" in m) {
+          names.push(`化${String((m as { name: unknown }).name)}`);
+        } else {
+          names.push(`化${m}`);
+        }
+      });
+    }
   }
   return names;
 }
@@ -136,18 +150,23 @@ const decadalPalace =
       try {
         const p = horoscope.palace?.(pn, scope.key);
         if (!p) continue;
-        const stars = [
-          ...collectStars(p.majorStars || p.stars, scope.kind),
-          ...collectStars(p.minorStars, scope.kind),
-          ...collectStars(p.horoscopeStars, scope.kind),
-        ];
+    const stars = [
+  ...collectStars(p.majorStars || p.stars),
+  ...collectStars(p.minorStars),
+  ...collectStars(p.horoscopeStars),
+];
         // 运限四化
         if (p.mutagen) {
           const ms = Array.isArray(p.mutagen) ? p.mutagen : [p.mutagen];
-          ms.forEach((m: any) => {
-            const label = typeof m === "string" ? `化${m}` : `化${m?.name || ""}`;
-            if (label.length > 1) stars.push(label);
-          });
+      ms.forEach((m: unknown) => {
+  const label =
+    typeof m === "string"
+      ? `化${m}`
+      : typeof m === "object" && m !== null && "name" in m
+      ? `化${String((m as { name: unknown }).name || "")}`
+      : `化${m}`;
+  if (label.length > 1) stars.push(label);
+});
         }
         addOverlay(pn, stars, scope.kind);
       } catch {

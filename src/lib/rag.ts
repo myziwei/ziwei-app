@@ -117,7 +117,7 @@ function normalizeTopics(raw: unknown): Partial<Record<RagTopicKey, string>> {
   return out;
 }
 
-function rowToHit(row: any): RagHit | null {
+function rowToHit(row: Record<string, unknown> | null | undefined): RagHit | null {
   if (!row) return null;
   const key = String(row.k || row.key || "");
   if (!key) return null;
@@ -185,12 +185,13 @@ async function findWithFindstr(
       } catch (e) {
         console.error("[RAG] JSON parse fail for key", v, e);
       }
-    } catch (e: any) {
-      // findstr 找不到时 exit code 1
-      if (e && e.code === 1) continue;
-      if (e && e.status === 1) continue;
-      console.error("[RAG] findstr error", v, e?.message || e);
-    }
+} catch (e: unknown) {
+  // findstr 找不到时 exit code 1
+  const err = e as { code?: number; status?: number; message?: string };
+  if (err?.code === 1) continue;
+  if (err?.status === 1) continue;
+  console.error("[RAG] findstr error", v, err?.message || e);
+}
   }
   return null;
 }
